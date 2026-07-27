@@ -1,0 +1,138 @@
+1. 创建实例    VkInstance
+
+    (1) 枚举实例的层属性
+	vkEnumerateInstanceLayerProperties	//获取实例层数量
+	vkEnumerateInstanceExtensionProperties		//获取功能拓展信息
+    (2) 创建实例
+	填写VkInstanceCreateInfo描述、VkInstance获取实例对象
+		VkInstanceCreateInfo::ppEnabledLayerNames	//开启的层名
+		VkInstanceCreateInfo::ppEnabledExtensionNames	//开启的功能拓展
+	vkCreateInstance	//创建实例对象
+
+2. 枚举物理设备    VkPhysicalDevice
+
+    (3) 枚举物理设备信息
+	VkPhysicalDevice	//物理设备		vector<VkPhysicalDevice>	//物理设备列表
+	vkEnumeratePhysicalDevices	//获取GPU数量&信息
+	vkEnumerateDeviceExtensionProperties	//枚举设备层拓展
+
+3. 创建设备    VkDevice
+
+    (4) 查询物理设备信息
+	vkGetPhysicalDeviceQueueFamilyProperties	//获取队列与队列类型
+	vkGetPhysicalDeviceMemoryProperties		//获取物理设备或者GPU内存属性
+	vkGetPhysicalDeviceProperties			//获取物理设备或GPU属性
+    (5) 从物理设备创建逻辑设备对象
+	填写VkDeviceCreateInfo描述逻辑设备创建信息
+		VkDeviceCreateInfo::enabledExtensionCount	//逻辑设备启用拓展数量
+		VkDeviceCreateInfo::ppEnabledExtensionNames	//逻辑设备启用名称
+	vkCreateDevice		//创建逻辑设备对象
+
+4. 展示层初始化
+
+    (6) 创建空窗口
+	CreateWindowEx	//创建Windows窗体		xcb_create_window	//创建Linux窗体
+    (6.1) 查询WS拓展，保存为函数指针
+	//vkCreateSwapchainKHR
+    (7) 创建抽象表面对象
+	VkWin32SurfaceCreateInfoKHR		//创建抽象表面信息
+	vkCreateWin32SurfaceKHR		//创建抽象表面对象
+    (8) 从所有物理设备中查询一个支持当前展示层的物理设备
+	vkGetPhysicalDeviceSurfaceSupportKHR	//获取支持的队列
+	查询到支持后保存索引号
+    (9) 获取兼容展示层的队列，也是一个图形队列
+	vkGetDeviceQueue		//同标题
+    (10) 分配内存空间记录绘制表面的格式与总数
+	vkGetPhysicalDeviceSurfaceFormatsKHR	//获取表面格式与总数
+	VkSurfaceFormatKHR	//分配内存
+    (11) 保存表面格式到VkSurfaceFormatKHR对象中
+	vkGetPhysicalDeviceSurfaceFormatsKHR	//保存，区别在末参是否nullptr
+
+5. 指令缓存
+
+    (12) 指令缓存初始化
+	vkCreateCommandPool	//创建指令池，同DX12 Command Allocator
+	vkAllocateCommandBuffers	//分配指令缓存，同DX12 Command List
+---------------------------------------------------------------------------------------------
+Vulkan将资源分为：1. 缓存	2. 图像
+    1. 1 缓存：线性数组，表示不同资源
+	类型：VkBuffer
+	创建方式：vkCreateBuffer
+	描述结构：VkBufferCreateInfo
+    1.2 缓存视图：表示数据缓存自身，可将数据连续保存，并设置特定解析格式。（所用缓存对象格式、缓存视图范围）
+	类型：VkBufferView
+	创建方式：vkCreateBufferView
+	描述结构：VkBufferViewCreateInfo
+    2.1 图像：可保存1-3维缓存数组
+	类型：VkImage
+	创建方式：vkCreateImage
+	描述结构：VkImageCreateInfo
+    2.2 图像视图：同缓存视图，描述所用缓存对象格式，范围
+	类型：VkImageView
+	创建方式：vkCreateImageView
+	描述结构：VkImageViewCreateInfo
+---------------------------------------------------------------------------------------------
+指令缓存记录内容：
+    1. 为交换链构建要绘制的图像及深度图像（深度缓存），并进行深度/模板测试
+    2. 创建着色器模块，并关联到着色器程序代码
+    3. 构建着色器所需资源，需要一个描述符集以及流水线布局
+    4. 创建并管理渲染管线和帧缓存对象
+    5. 执行绘制操作
+---------------------------------------------------------------------------------------------
+
+6. 创建交换链
+
+    (13) 开始指令缓存记录
+	vkBeginCommandBuffer	//开始录制指令缓存
+    (14) 获取表面性能参数（查询表面性能参数，如尺寸、空间变换性能）【开始交换链创建】
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR	//同题
+    (15) 获取表面展示模式（展示模式表示当前绘制表面所用的更新方法，比如是否立即模式渲染、是否支持垂扫）
+	存储类型：VkPresentModeKHR
+	方法：vkGetPhysicalDeviceSurfacePresentModesKHR	//模式数目、具体模式
+    (16) 创建交换链
+	描述结构：VkSwapChainCreateInfoKHR		//描述交换链信息
+	创建交换链对象：fpCreateSwapchainKHR		//用交换链信息创建交换链对象
+    (17) 获取交换链图像（缓存）
+	存储类型：VkImage
+	方法：vkGetSwapchainImagesKHR			//查询交换链缓存数量，获取对应图像（缓存）VkImage
+    (18) 设置图像布局（设置与具体设备实现兼容的布局方式，并添加屏障Barrier防止资源冒险）
+	SetImageLayout			//设置布局
+	流水线屏障：
+		描述结构：VkImageMemoryBarrier
+		方法：vkCmdPipelineBarrier		//添加Barrier
+    (19) 为交换链图像（缓存）创建视图
+	vkCreateImageView		//同标题
+	//图像视图push到buffer中，以便后续使用
+
+7. 创建深度图像（缓存）
+
+    (20) 查询深度图像所用物理设备的格式属性
+	vkGetPhysicalDeviceFormatProperties	//同标题
+    (21) 创建图像并获取内存需求
+	vkCreateImage		//创建深度缓存
+	vkGetImageMemoryRequirements	//获取图像（缓存）资源内存需求
+	//vkGetBufferMemoryRequirements	//获取线性（缓存）资源内存需求
+    (22) 查询物理设备上可用的内存空间
+	存储类型：VkPhysicalDeviceMemoryProperties
+	方法：vkGetPhysicalDeviceMemoryProperties	
+    (23) 分配深度缓存内存并绑定到图像（缓存）对象
+	vkAllocateMemory		//分配内存
+	vkBindImageMemory		//绑定到图像对象
+	//vkBindBufferMemory		//绑定到线性缓存对象
+    (24) 设置深度缓存布局和视图
+	SetImageLayout		//设置布局
+	vkCmdPipelineBarrier	//设置屏障确保在用前被创建
+	vkCreateImageView		//创建深度缓存视图
+---------------------------------------------------------------------------------------------
+内存映射：GPU显存映射到CPU宿主机内存，映射用于CPU端向GPU端提交/更新数据
+	vkMapMemory		//将设备内存映射到宿主机内存（在可见的vkDeviceMemory上返回该memory的指针）
+	memcpy			//更新宿主机内存到设备内存
+	vkUnmapMemory		//取消映射
+Vulkan与DX12在CPU与GPU数据更新上对比：
+	API		        CPU		  	            GPU
+	Vulkan		matrix（数据）|-------Map----->|GPU直接使用Buffer					//无upload buffer，没法复用，数据直接写入GPU Use
+	DX12		matrix（数据）|-------Map----->|GPU Upload Buffer------upload------>GPU直接使用Buffer	//有upload buffer，可复用upload buffer
+---------------------------------------------------------------------------------------------
+
+8. 着色器
+    (25) 
