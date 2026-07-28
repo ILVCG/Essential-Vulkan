@@ -233,10 +233,10 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 			VkVertexInputBindingDescription::stride		//数据间隔（自定义顶点数据大小）
     (41) 说明流水线如何解析缓存资源数据
 	描述结构：VkVertexInputAttributeDescription
-			kVertexInputAttributeDescription::binding		//该属性获取数据的绑定值
-			kVertexInputAttributeDescription::location	//shader输入位置
-			kVertexInputAttributeDescription::format		//顶点数据的大小与类型
-			kVertexInputAttributeDescription::offset		//与开始元素的偏移字节数
+			VkVertexInputAttributeDescription::binding		//该属性获取数据的绑定值
+			VkVertexInputAttributeDescription::location	//shader输入位置
+			VkVertexInputAttributeDescription::format		//顶点数据的大小与类型
+			VkVertexInputAttributeDescription::offset		//与开始元素的偏移字节数
 
 12. 创建流水线
 
@@ -254,4 +254,140 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 	6. 深度模板状态：实现深度测试、模板测试、深度边界测试
 	7. 多重采样状态：控制图元在光栅化时反走样机制的实现。
 ---------------------------------------------------------------------------------------------
-    (42) 定义流水线不同阶段的状态对象
+
+    (42) 定义流水线不同阶段的状态对象、
+	描述结构：VkPipelineVertexInputStateCreateInfo		//顶点输入状态
+		VkPipelineDynamicStateCreateInfo		//动态状态
+		VkPipelineInputAssemblyStateCreateInfo		//输入组装状态
+		VkPipelineRasterizationStateCreateInfo		//光栅化状态
+		VkPipelineColorBlendStateCreateInfo		//颜色融混状态
+		VkPipelineViewportStateCreateInfo		//视口状态
+		VkPipelineDepthStencilStateCreateInfo		//深度模板状态
+		VkPipelineMultisampleStateCreateInfo		//多重采样状态
+
+---------------------------------------------------------------------------------------------
+流水线状态对象被封装在VkGraphicsPipelineCreateInfo内，该结构体允许直接访问图形流水线对象中流水线状态信息。
+流水线状态对象创建非常耗费时间，这也是提升整体性能的关键。因此需要从流水线缓存VkPipelineCache中构建流水线状态对象，
+这样驱动端就可以直接使用已有的基础流水线数据来构建一个新的流水线。
+---------------------------------------------------------------------------------------------
+    (43) 创建流水线对象
+	结构类型：VkPipelineCache		//流水线对象
+		VkPipelineCacheCreateInfo	//流水线对象描述
+		VkPipeline		//图形流水线
+		VkGraphicsPipelineCreateInfo	//图形流水线描述
+	方法：	vkCreatePipelineCache
+		vkCreateGraphicsPipelines	//填写完图形流水线控制参数结构体后调用创建
+    (44) 定义图形流水线控制参数结构体
+	描述结构：VkGraphicsPipelineCreateInfo
+			VkGraphicsPipelineCreateInfo::layout			//流水线布局
+			VkGraphicsPipelineCreateInfo::pVertexInputState		//顶点输入状态
+			VkGraphicsPipelineCreateInfo::pInputAssemblyState		//输入组装状态
+			VkGraphicsPipelineCreateInfo::pRasterizationState		//光栅化状态
+			VkGraphicsPipelineCreateInfo::pColorBlendState		//颜色混合状态
+			VkGraphicsPipelineCreateInfo::pMultisampleState		//多重采样状态
+			VkGraphicsPipelineCreateInfo::pDynamicState		//动态状态
+			VkGraphicsPipelineCreateInfo::pViewportState		//视口状态	
+			VkGraphicsPipelineCreateInfo::pDepthStencilState		//深度模板状态
+			VkGraphicsPipelineCreateInfo::pStages			//管线中包含的着色器阶段
+			VkGraphicsPipelineCreateInfo::stageCount		//管线中包含的着色器阶段数量
+			VkGraphicsPipelineCreateInfo::renderPass			//渲染传递对象
+    (45) 创建图形流水线
+	vkCreateGraphicsPipelines		//如题
+
+13. 执行渲染通道
+
+---------------------------------------------------------------------------------------------
+目前已经创建了帧缓存对象，并将交换链中的render buffer与之关联。
+现在在获取可以使用的图像索引号后，通过索引号获取对应帧缓存，并传递给渲染通道，实现几何渲染。
+引入同步信号，确保绘制图像的获取操作必须在它已经被渲染到显示输出设备之后，并且已经准备的前提下完成。
+---------------------------------------------------------------------------------------------
+    (46) 获取绘制表面
+	结构类型：VkSemaphore		//图像获取操作的同步信号量
+		VkSemaphoreCreateInfo	//描述同步信号结构
+			VkSemaphoreCreateInfo::sType		//定义该结构，此处为VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO
+	方法：	vkCreateSemaphore		//创建同步信号
+		vkAcquireNextImageKHR	//获取下一个可用的交换链图像索引号
+    (47) 设置渲染通道的控制参数结构体
+	结构类型：VkClearValue			//定义清屏颜色及深度模板值，对应该结构类型数组的索引0、1
+		//Usage:
+		//clearArr[0].color.float32 = {...}				//清屏颜色
+		//clearArr[1].depthStencil = {1.0f, 0}			//深度模板清除值
+		VkRenderPassBeginInfo				//描述帧缓存的渲染通道执行
+			VkRenderPassBeginInfo::sType			//结构类型，此处为VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO
+			VkRenderPassBeginInfo::pNext			//nullptr
+			VkRenderPassBeginInfo::renderPass		//renderPass对象
+			VkRenderPassBeginInfo::framebuffer		//交换链当前使用的framebuffer
+			VkRenderPassBeginInfo::renderArea.offset.x	//0
+			VkRenderPassBeginInfo::renderArea.offset.y	//0
+			VkRenderPassBeginInfo::renderArea.extent.width	//同framebuffer的width
+			VkRenderPassBeginInfo::renderArea.extent.height	//同framebuffer的height
+			VkRenderPassBeginInfo::clearValueCount		//对应前述VkClearValue数组元素数
+			VkRenderPassBeginInfo::pClearValues		//对应前述VkClearValue数组指针
+---------------------------------------------------------------------------------------------
+渲染通道执行流程：
+	1. 绑定流水线：使用vkCmdBindPipeline
+	2. 绑定几何体缓存：使用vkCmdBindVertexBuffers
+	3. 视口和裁切：使用vkCmdSetViewport和vkCmdSetScissor
+	4. 绘制对象：通过绘制指令执行
+---------------------------------------------------------------------------------------------
+    (48) 开始渲染通道
+	vkCmdBeginRenderPass
+    (49) 绑定流水线
+	vkCmdBindPipeline
+    (50) 绑定三角形缓存数据
+	vkCmdBindVertexBuffers	//需要VkDeviceSize类型offsets
+    (51) 设置视口
+	vkCmdSetViewport
+    (52) 设置裁切器
+	vkCmdSetScissor
+    (53) 设置绘制指令
+	vkCmdDraw		//需要记录了绘制命令的CommandBuffer
+    (54) 结束渲染通道
+	vkCmdEndRenderPass	
+    (55) 设置交换链图像布局
+	setImageLayout		//VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+    (56) 结束指令缓存录制
+	vkEndCommandBuffer
+
+14. 队列提交与同步（发送任务）
+
+---------------------------------------------------------------------------------------------
+已记录了多个指令到指令缓存中，包括渲染通道信息和图形流水线对象。
+接下来需要将指令缓存发送到队列，驱动会开始读取指令缓存并准备调度和执行。
+为了高效渲染，指令缓存会被打包为多个批次，若有多个指令缓存，需要设法打包到一个VkCommandBuffer数组中。
+Vulkan使用VkFence（类似DX12的ID3D12Fence）确保推送新批次前之前的批次已经处理完成。
+VkFence使用vkCreateFence创建，VkFence由VkFenceCreateInfo控制结构描述
+指令缓存需要传递给发送对象VkSubmitInfo，该对象包含了一个指令缓存列表和一个VkSemaphore实现帧缓存与交换链图像同步，
+并进一步传递给函数vkQueueSubmit，其中包含一个VkQueue对象来包含发送的指令缓存数据，及一个VkFence确保每个指令缓存的发送之间正确同步。
+---------------------------------------------------------------------------------------------
+    (57) 创建屏障（栅栏）对象
+	描述结构：VkFenceCreateInfo
+	存储类型：VkFence
+	方法：vkCreateFence
+    (58) 描述发送对象结构
+	描述结构：VkSubmitInfo
+			VkSubmitInfo::pNext			//nullptr
+			VkSubmitInfo::sType			//此处为VK_STRUCTURE_TYPE_SUBMIT_INFO
+			VkSubmitInfo::pWaitSemaphores	//同步信号
+			VkSubmitInfo::commandBufferCount	//command buffer数组数量
+			VkSubmitInfo::pCommandBuffers	//命令缓存
+    (59) 将指令缓存发送到队列中执行
+	vkQueueSubmit
+
+15. 使用展示层进行显示
+
+    (60) 定义展示的控制结构体
+	描述结构：VkPresentInfoKHR
+			VkPresentInfoKHR::sType		//此处为VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
+			VkPresentInfoKHR::pNext		//nullptr
+			VkPresentInfoKHR::swapchainCount	//交换链数量，此处为1
+			VkPresentInfoKHR::pSwapchains	//交换链指针
+			VkPresentInfoKHR::pImageIndices	//交换链对象当前图像buffer
+    (61) 检查之前的批次是否执行完
+	未执行完标记：VK_TIMEOUT
+	方法：vkWaitForFences			//若检查（while标记）为VK_TIMEOUT，则执行该方法等Fence
+    (62) 切换展示buffer，呈现
+	vkQueuePresentKHR
+    (63) 完成后删除同步对象
+	vkDestroySemaphore		//删除信号对象
+	vkDestroyFence			//删除栅栏
