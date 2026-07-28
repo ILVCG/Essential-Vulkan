@@ -337,17 +337,17 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
     (49) 绑定流水线
 	vkCmdBindPipeline
     (50) 绑定三角形缓存数据
-	vkCmdBindVertexBuffers	//需要VkDeviceSize类型offsets
+	vkCmdBindVertexBuffers		//需要VkDeviceSize类型offsets
     (51) 设置视口
 	vkCmdSetViewport
     (52) 设置裁切器
 	vkCmdSetScissor
     (53) 设置绘制指令
-	vkCmdDraw		//需要记录了绘制命令的CommandBuffer
+	vkCmdDraw					//需要记录了绘制命令的CommandBuffer
     (54) 结束渲染通道
 	vkCmdEndRenderPass	
     (55) 设置交换链图像布局
-	setImageLayout		//VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
+	setImageLayout				//VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL
     (56) 结束指令缓存录制
 	vkEndCommandBuffer
 
@@ -368,11 +368,11 @@ VkFence使用vkCreateFence创建，VkFence由VkFenceCreateInfo控制结构描述
 	方法：vkCreateFence
     (58) 描述发送对象结构
 	描述结构：VkSubmitInfo
-			VkSubmitInfo::pNext			//nullptr
-			VkSubmitInfo::sType			//此处为VK_STRUCTURE_TYPE_SUBMIT_INFO
-			VkSubmitInfo::pWaitSemaphores	//同步信号
+			VkSubmitInfo::pNext					//nullptr
+			VkSubmitInfo::sType					//此处为VK_STRUCTURE_TYPE_SUBMIT_INFO
+			VkSubmitInfo::pWaitSemaphores		//同步信号
 			VkSubmitInfo::commandBufferCount	//command buffer数组数量
-			VkSubmitInfo::pCommandBuffers	//命令缓存
+			VkSubmitInfo::pCommandBuffers		//命令缓存
     (59) 将指令缓存发送到队列中执行
 	vkQueueSubmit
 
@@ -380,11 +380,11 @@ VkFence使用vkCreateFence创建，VkFence由VkFenceCreateInfo控制结构描述
 
     (60) 定义展示的控制结构体
 	描述结构：VkPresentInfoKHR
-			VkPresentInfoKHR::sType		//此处为VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
-			VkPresentInfoKHR::pNext		//nullptr
+			VkPresentInfoKHR::sType				//此处为VK_STRUCTURE_TYPE_PRESENT_INFO_KHR
+			VkPresentInfoKHR::pNext				//nullptr
 			VkPresentInfoKHR::swapchainCount	//交换链数量，此处为1
-			VkPresentInfoKHR::pSwapchains	//交换链指针
-			VkPresentInfoKHR::pImageIndices	//交换链对象当前图像buffer
+			VkPresentInfoKHR::pSwapchains		//交换链指针
+			VkPresentInfoKHR::pImageIndices		//交换链对象当前图像buffer
     (61) 检查之前的批次是否执行完
 	未执行完标记：VK_TIMEOUT
 	方法：vkWaitForFences			//若检查（while标记）为VK_TIMEOUT，则执行该方法等Fence
@@ -393,3 +393,27 @@ VkFence使用vkCreateFence创建，VkFence由VkFenceCreateInfo控制结构描述
     (63) 完成后删除同步对象
 	vkDestroySemaphore		//删除信号对象
 	vkDestroyFence			//删除栅栏
+
+###############################################################################################
+Vulkan同步概念补充
+1. Event同步
+    Event是可重置的二值信号，用于：
+	1. 在同一条command buffer里：某点set event，后面某点wait event，中间可以插入其它命令。
+	2. 在不同command buffer（甚至同队列先后submit）里：前缓冲vkCmdSetEvent，后缓冲vkCmdWaitEvents，用event把两段GPU 工作串起来，而不必在整条队列上插一个大 barrier。
+    相关命令：
+	GPU端：	vkCmdSetEvent：执行到这里时，在指定pipeline stage把event设为signaled。
+		vkCmdWaitEvents：在指定stage等待一个或多个event，并可附带memory barrier（global/buffer/image），描述wait之后的可见性。
+	CPU端：	vkGetEventStatus 		//获取Event状态
+		vkSetEvent  				//设置Event状态
+		vkResetEvent				//重置Event状态
+2. Barrier同步
+    Barrier在一条命令缓冲的某条命令位置上声明：
+	1. 执行依赖（execution dependency）：即哪些管线阶段（VkPipelineStageFlags）上的工作必须先完成，哪些阶段才能开始。
+	2. 内存依赖（memory dependency）：即哪些访问类型（VkAccessFlags）对哪些内存的写/读必须对后续可见（相当于 cache / visibility 的约束）。
+    类型：
+	1. Global memory barrier		//不关联具体Image / Buffer，整段内存可见
+	2. Buffer memory barrier		//指定Buffer区间访问，与Layout无关
+	3. Image memory barrier			//指定Image、Subresource区间访问，Layout转换
+    相关命令：
+	vkCmdPipelineBarrier / vkCmdPipelineBarrier2		//插入内存依赖Barrier
+###############################################################################################
