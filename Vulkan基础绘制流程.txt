@@ -4,20 +4,21 @@
 入口点、初始化点、同DX12的IDXGIFactory
 ---------------------------------------------------------------------------------------------
     (1) 枚举实例的层属性
-	vkEnumerateInstanceLayerProperties	//获取实例层数量
+	vkEnumerateInstanceLayerProperties		//获取实例层数量
 	vkEnumerateInstanceExtensionProperties		//获取功能拓展信息
     (2) 创建实例
 	填写VkInstanceCreateInfo描述、VkInstance获取实例对象
-		VkInstanceCreateInfo::ppEnabledLayerNames	//开启的层名
-		VkInstanceCreateInfo::ppEnabledExtensionNames	//开启的功能拓展
-	vkCreateInstance	//创建实例对象
+		VkInstanceCreateInfo::ppEnabledLayerNames		//开启的层名
+		VkInstanceCreateInfo::ppEnabledExtensionNames		//开启的功能拓展
+	vkCreateInstance		//创建实例对象
 
 2. 枚举物理设备    VkPhysicalDevice
 
     (3) 枚举物理设备信息
-	VkPhysicalDevice	//物理设备		vector<VkPhysicalDevice>	//物理设备列表
-	vkEnumeratePhysicalDevices	//获取GPU数量&信息
-	vkEnumerateDeviceExtensionProperties	//枚举设备层拓展
+	VkPhysicalDevice			//物理设备		
+	vector<VkPhysicalDevice>		//物理设备列表
+	vkEnumeratePhysicalDevices		//获取GPU数量&信息
+	vkEnumerateDeviceExtensionProperties		//枚举设备层拓展
 
 3. 创建设备    VkDevice
 
@@ -27,35 +28,36 @@
 	vkGetPhysicalDeviceProperties			//获取物理设备或GPU属性
     (5) 从物理设备创建逻辑设备对象
 	填写VkDeviceCreateInfo描述逻辑设备创建信息
-		VkDeviceCreateInfo::enabledExtensionCount	//逻辑设备启用拓展数量
-		VkDeviceCreateInfo::ppEnabledExtensionNames	//逻辑设备启用名称
+		VkDeviceCreateInfo::enabledExtensionCount		//逻辑设备启用拓展数量
+		VkDeviceCreateInfo::ppEnabledExtensionNames		//逻辑设备启用名称
 	vkCreateDevice		//创建逻辑设备对象
 
 4. 展示层初始化
 
     (6) 创建空窗口
-	CreateWindowEx	//创建Windows窗体		xcb_create_window	//创建Linux窗体
+	CreateWindowEx			//创建Windows窗体		
+	xcb_create_window		//创建Linux窗体
     (6.1) 查询WS拓展，保存为函数指针
-	//vkCreateSwapchainKHR
+					//vkCreateSwapchainKHR
     (7) 创建抽象表面对象
 	VkWin32SurfaceCreateInfoKHR		//创建抽象表面信息
-	vkCreateWin32SurfaceKHR		//创建抽象表面对象
+	vkCreateWin32SurfaceKHR			//创建抽象表面对象
     (8) 从所有物理设备中查询一个支持当前展示层的物理设备
-	vkGetPhysicalDeviceSurfaceSupportKHR	//获取支持的队列
+	vkGetPhysicalDeviceSurfaceSupportKHR		//获取支持的队列
 	查询到支持后保存索引号
     (9) 获取兼容展示层的队列，也是一个图形队列
-	vkGetDeviceQueue		//同标题
+	vkGetDeviceQueue			//同标题
     (10) 分配内存空间记录绘制表面的格式与总数
-	vkGetPhysicalDeviceSurfaceFormatsKHR	//获取表面格式与总数
-	VkSurfaceFormatKHR	//分配内存
+	vkGetPhysicalDeviceSurfaceFormatsKHR		//获取表面格式与总数
+	VkSurfaceFormatKHR			//分配内存
     (11) 保存表面格式到VkSurfaceFormatKHR对象中
 	vkGetPhysicalDeviceSurfaceFormatsKHR	//保存，区别在末参是否nullptr
 
 5. 指令缓存
 
     (12) 指令缓存初始化
-	vkCreateCommandPool	//创建指令池，同DX12 Command Allocator
-	vkAllocateCommandBuffers	//分配指令缓存，同DX12 Command List
+	vkCreateCommandPool			//创建指令池，同DX12 Command Allocator
+	vkAllocateCommandBuffers		//分配指令缓存，同DX12 Command List
 ---------------------------------------------------------------------------------------------
 Vulkan将资源分为：1. 缓存	2. 图像
     1. 1 缓存：线性数组，表示不同资源
@@ -86,15 +88,15 @@ Vulkan将资源分为：1. 缓存	2. 图像
 6. 创建交换链
 
     (13) 开始指令缓存记录
-	vkBeginCommandBuffer	//开始录制指令缓存
+	vkBeginCommandBuffer		//开始录制指令缓存
     (14) 获取表面性能参数（查询表面性能参数，如尺寸、空间变换性能）【开始交换链创建】
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR	//同题
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR		//同题
     (15) 获取表面展示模式（展示模式表示当前绘制表面所用的更新方法，比如是否立即模式渲染、是否支持垂扫）
 	存储类型：VkPresentModeKHR
-	方法：vkGetPhysicalDeviceSurfacePresentModesKHR	//模式数目、具体模式
+	方法：vkGetPhysicalDeviceSurfacePresentModesKHR		//模式数目、具体模式
     (16) 创建交换链
-	描述结构：VkSwapChainCreateInfoKHR		//描述交换链信息
-	创建交换链对象：fpCreateSwapchainKHR		//用交换链信息创建交换链对象
+	描述结构：VkSwapChainCreateInfoKHR			//描述交换链信息
+	创建交换链对象：fpCreateSwapchainKHR			//用交换链信息创建交换链对象
     (17) 获取交换链图像（缓存）
 	存储类型：VkImage
 	方法：vkGetSwapchainImagesKHR			//查询交换链缓存数量，获取对应图像（缓存）VkImage
@@ -110,7 +112,7 @@ Vulkan将资源分为：1. 缓存	2. 图像
 7. 创建深度图像（缓存）
 
     (20) 查询深度图像所用物理设备的格式属性
-	vkGetPhysicalDeviceFormatProperties	//同标题
+	vkGetPhysicalDeviceFormatProperties			//同标题
     (21) 创建图像并获取内存需求
 	vkCreateImage		//创建深度缓存
 	vkGetImageMemoryRequirements	//获取图像（缓存）资源内存需求
@@ -123,16 +125,16 @@ Vulkan将资源分为：1. 缓存	2. 图像
 	vkBindImageMemory		//绑定到图像对象
 	//vkBindBufferMemory		//绑定到线性缓存对象
     (24) 设置深度缓存布局和视图
-	SetImageLayout		//设置布局
+	SetImageLayout			//设置布局
 	vkCmdPipelineBarrier	//设置屏障确保在用前被创建
 	vkCreateImageView		//创建深度缓存视图
 ---------------------------------------------------------------------------------------------
 内存映射：GPU显存映射到CPU宿主机内存，映射用于CPU端向GPU端提交/更新数据
-	vkMapMemory		//将设备内存映射到宿主机内存（在可见的vkDeviceMemory上返回该memory的指针）
-	memcpy			//更新宿主机内存到设备内存
+	vkMapMemory			//将设备内存映射到宿主机内存（在可见的vkDeviceMemory上返回该memory的指针）
+	memcpy				//更新宿主机内存到设备内存
 	vkUnmapMemory		//取消映射
 Vulkan与DX12在CPU与GPU数据更新上对比：
-	API		        CPU		  	            GPU
+	API		        	CPU		  	            GPU
 	Vulkan		matrix（数据）|-------Map----->|GPU直接使用Buffer					//无upload buffer，没法复用，数据直接写入GPU Use
 	DX12		matrix（数据）|-------Map----->|GPU Upload Buffer------upload------>GPU直接使用Buffer	//有upload buffer，可复用upload buffer
 ---------------------------------------------------------------------------------------------
@@ -140,9 +142,9 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 8. 着色器
 
     (25) 构建着色器模块
-	结构类型：VkPipelineShaderStageCreateInfo	//管线着色器阶段信息描述
-		VkShaderModuleCreateInfo		//着色器模块信息
-			VkShaderModuleCreateInfo::pCode	//存二进制格式着色器代码
+	结构类型：VkPipelineShaderStageCreateInfo		//管线着色器阶段信息描述
+		VkShaderModuleCreateInfo					//着色器模块信息
+			VkShaderModuleCreateInfo::pCode			//存二进制格式着色器代码
 	方法：vkCreateShaderModule
 
 9. 构建描述符与布局
@@ -151,14 +153,14 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 描述符负责将资源与着色器通过布局绑定的方式关联起来，通常用它绑定Uniform和Sampler变量到着色器中。一个描述符集可包含多个布局绑定的描述符。
 ---------------------------------------------------------------------------------------------
     (26) 创建布局绑定描述符数组，每个布局绑定描述符属性（类型）与Shader一一对应，同DX12的Root Signature
-	类型：VkDescriptorSetLayoutBinding 	//布局绑定描述符
-			VkDescriptorSetLayoutBinding::descriptorType	//对应shader类型（Uniform / Sampler）
-			VkDescriptorSetLayoutBinding::binding		//绑定入口数量，与shader阶段绑定的资源数一一对应
-			VkDescriptorSetLayoutBinding::stageFlag		//设置Shader类型（Vertex / Fragment）
+	类型：VkDescriptorSetLayoutBinding 			//布局绑定描述符
+			VkDescriptorSetLayoutBinding::descriptorType		//对应shader类型（Uniform / Sampler）
+			VkDescriptorSetLayoutBinding::binding				//绑定入口数量，与shader阶段绑定的资源数一一对应
+			VkDescriptorSetLayoutBinding::stageFlag				//设置Shader类型（Vertex / Fragment）
     (27) 创建布局描述符集对象
-	描述结构：VkDescriptorSetLayoutCreateInfo	//说明如何创建布局描述符集对象
-			VkDescriptorSetLayoutCreateInfo::pBindings	//要绑定的布局绑定描述符（数组）地址
-	存储类型：VkDescriptorSetLayout		//存储布局描述符集对象
+	描述结构：VkDescriptorSetLayoutCreateInfo					//说明如何创建布局描述符集对象
+			VkDescriptorSetLayoutCreateInfo::pBindings			//要绑定的布局绑定描述符（数组）地址
+	存储类型：VkDescriptorSetLayout								//存储布局描述符集对象
 	方法：vkCreateDescriptorSetLayout
     (28) 创建流水线布局
 	描述结构：VkPipelineLayoutCreateInfo
@@ -169,13 +171,13 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 
     (29) 声明两个Attachment（2元素数组），分别对应颜色（Render）与深度（Depth）缓存
 	描述结构：VkAttachmentDescription
-			VkAttachmentDescription::format	//指定当前该元素是颜色还是深度
-			VkAttachmentDescription::loadOp	//是否清除
+			VkAttachmentDescription::format					//指定当前该元素是颜色还是深度
+			VkAttachmentDescription::loadOp					//是否清除
     (30) 分别对上述两个Attach做引用结构存储
 	描述结构：VkAttachmentReference
     (31) 使用引用结构参照的render buffer和depth buffer说明子通道
 	描述结构：VkSubpassDescription
-			VkSubpassDescription::pColorAttachments	//颜色引用指针
+			VkSubpassDescription::pColorAttachments			//颜色引用指针
 			VkSubpassDescription::pDepthStencilAttachment	//深度引用指针
     (32) 定义渲染通道控制的结构体
 	描述结构：VkRenderPassCreateInfo
@@ -189,14 +191,14 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 帧缓存指图像（缓存）视图的集合，用于将绘制图像关联到渲染通道
 ---------------------------------------------------------------------------------------------
     (34) 创建图像视图数组
-	结构类型：VkImageView	//创建2元素该类型数组，索引0对应颜色，索引1对应深度
-			imageViewArrs[1] = Depth.view	//将深度视图给数组[1]
+	结构类型：VkImageView			//创建2元素该类型数组，索引0对应颜色，索引1对应深度
+			imageViewArrs[1] = Depth.view			//将深度视图给数组[1]
     (35) 描述帧缓存结构
 	描述结构：VkFramebufferCreateInfo
-			VkFramebufferCreateInfo::renderPass		//渲染通道对象
+			VkFramebufferCreateInfo::renderPass			//渲染通道对象
 			VkFramebufferCreateInfo::pAttachments		//图像视图数组指针
-			VkFramebufferCreateInfo::width		//帧缓存宽度
-			VkFramebufferCreateInfo::height		//帧缓存高度
+			VkFramebufferCreateInfo::width				//帧缓存宽度
+			VkFramebufferCreateInfo::height				//帧缓存高度
     (36) 为交换链中每个图像的帧缓存分配内存，每幅图像对应一个帧缓存
 	存储类型：VkFramebuffer
 	方法： vkCreateFramebuffer
@@ -205,7 +207,7 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 11. 存储顶点数据并绑定到流水线
 
     (37) 自定义顶点结构，并保存顶点数据
-	顶点结构：VertexWithColor	//自定义
+	顶点结构：VertexWithColor			//自定义
 	顶点数组：VertexWithColor triangleData[] = {  {0.0f, 1.0f, ...}, ...  };
     (38) 创建存顶点的缓存（Vertex Buffer）对象、查询所需内存空间，并分配内存
 	存储类型：顶点缓存类型：VkBuffer
@@ -213,28 +215,28 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 		设备内存抽象类型：VkDeviceMemory
 	描述结构：描述缓存创建信息：VkBufferCreateInfo
 		内存分配信息：VkMemoryAllocateInfo
-	方法：	vkCreateBuffer	//创建缓存对象
-		vkGetBufferMemoryRequirements	//查询buffer所需内存
-		vkAllocateMemory		//分配内存
+	方法：	vkCreateBuffer					//创建缓存对象
+		vkGetBufferMemoryRequirements		//查询buffer所需内存
+		vkAllocateMemory					//分配内存
     (39) 将顶点数据Map到GPU端
 	GPU端Buffer指针：uint8_t*  pData
-	方法：	vkMapMemory		//获取GPU端Buffer指针，并存入pData
-		memcpy			//拷贝顶点数据到GPU端Buffer
-		vkUnmapMemory		//取消映射
-		vkBindBufferMemory	//绑定分配的内存到vkBuffer对象
+	方法：	vkMapMemory				//获取GPU端Buffer指针，并存入pData
+		memcpy						//拷贝顶点数据到GPU端Buffer
+		vkUnmapMemory				//取消映射
+		vkBindBufferMemory			//绑定分配的内存到vkBuffer对象
 ---------------------------------------------------------------------------------------------
 vkBuffer一开始并不会和任何形式内存空间关联，应用必须主动分配和绑定设备内存到缓存对象，再使用。
 vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对外使用。在shader stage访问vkBuffer仍需要通过View。
 ---------------------------------------------------------------------------------------------
     (40) 说明流水线如何读取缓存资源数据
 	描述结构：VkVertexInputBindingDescription
-			VkVertexInputBindingDescription::binding	//shader输入位置
-			VkVertexInputBindingDescription::inputRate	//数据读取方式（逐顶点 / 基于一系列实例）
-			VkVertexInputBindingDescription::stride		//数据间隔（自定义顶点数据大小）
+			VkVertexInputBindingDescription::binding		//shader输入位置
+			VkVertexInputBindingDescription::inputRate		//数据读取方式（逐顶点 / 基于一系列实例）
+			VkVertexInputBindingDescription::stride			//数据间隔（自定义顶点数据大小）
     (41) 说明流水线如何解析缓存资源数据
 	描述结构：VkVertexInputAttributeDescription
 			VkVertexInputAttributeDescription::binding		//该属性获取数据的绑定值
-			VkVertexInputAttributeDescription::location	//shader输入位置
+			VkVertexInputAttributeDescription::location		//shader输入位置
 			VkVertexInputAttributeDescription::format		//顶点数据的大小与类型
 			VkVertexInputAttributeDescription::offset		//与开始元素的偏移字节数
 
@@ -257,13 +259,13 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 
     (42) 定义流水线不同阶段的状态对象、
 	描述结构：VkPipelineVertexInputStateCreateInfo		//顶点输入状态
-		VkPipelineDynamicStateCreateInfo		//动态状态
-		VkPipelineInputAssemblyStateCreateInfo		//输入组装状态
-		VkPipelineRasterizationStateCreateInfo		//光栅化状态
-		VkPipelineColorBlendStateCreateInfo		//颜色融混状态
-		VkPipelineViewportStateCreateInfo		//视口状态
-		VkPipelineDepthStencilStateCreateInfo		//深度模板状态
-		VkPipelineMultisampleStateCreateInfo		//多重采样状态
+		VkPipelineDynamicStateCreateInfo				//动态状态
+		VkPipelineInputAssemblyStateCreateInfo			//输入组装状态
+		VkPipelineRasterizationStateCreateInfo			//光栅化状态
+		VkPipelineColorBlendStateCreateInfo				//颜色融混状态
+		VkPipelineViewportStateCreateInfo				//视口状态
+		VkPipelineDepthStencilStateCreateInfo			//深度模板状态
+		VkPipelineMultisampleStateCreateInfo			//多重采样状态
 
 ---------------------------------------------------------------------------------------------
 流水线状态对象被封装在VkGraphicsPipelineCreateInfo内，该结构体允许直接访问图形流水线对象中流水线状态信息。
@@ -271,28 +273,28 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 这样驱动端就可以直接使用已有的基础流水线数据来构建一个新的流水线。
 ---------------------------------------------------------------------------------------------
     (43) 创建流水线对象
-	结构类型：VkPipelineCache		//流水线对象
-		VkPipelineCacheCreateInfo	//流水线对象描述
-		VkPipeline		//图形流水线
-		VkGraphicsPipelineCreateInfo	//图形流水线描述
+	结构类型：VkPipelineCache				//流水线对象
+		VkPipelineCacheCreateInfo			//流水线对象描述
+		VkPipeline			//图形流水线
+		VkGraphicsPipelineCreateInfo		//图形流水线描述
 	方法：	vkCreatePipelineCache
 		vkCreateGraphicsPipelines	//填写完图形流水线控制参数结构体后调用创建
     (44) 定义图形流水线控制参数结构体
 	描述结构：VkGraphicsPipelineCreateInfo
-			VkGraphicsPipelineCreateInfo::layout			//流水线布局
-			VkGraphicsPipelineCreateInfo::pVertexInputState		//顶点输入状态
+			VkGraphicsPipelineCreateInfo::layout					//流水线布局
+			VkGraphicsPipelineCreateInfo::pVertexInputState			//顶点输入状态
 			VkGraphicsPipelineCreateInfo::pInputAssemblyState		//输入组装状态
 			VkGraphicsPipelineCreateInfo::pRasterizationState		//光栅化状态
-			VkGraphicsPipelineCreateInfo::pColorBlendState		//颜色混合状态
-			VkGraphicsPipelineCreateInfo::pMultisampleState		//多重采样状态
-			VkGraphicsPipelineCreateInfo::pDynamicState		//动态状态
-			VkGraphicsPipelineCreateInfo::pViewportState		//视口状态	
+			VkGraphicsPipelineCreateInfo::pColorBlendState			//颜色混合状态
+			VkGraphicsPipelineCreateInfo::pMultisampleState			//多重采样状态
+			VkGraphicsPipelineCreateInfo::pDynamicState				//动态状态
+			VkGraphicsPipelineCreateInfo::pViewportState			//视口状态	
 			VkGraphicsPipelineCreateInfo::pDepthStencilState		//深度模板状态
-			VkGraphicsPipelineCreateInfo::pStages			//管线中包含的着色器阶段
-			VkGraphicsPipelineCreateInfo::stageCount		//管线中包含的着色器阶段数量
-			VkGraphicsPipelineCreateInfo::renderPass			//渲染传递对象
+			VkGraphicsPipelineCreateInfo::pStages					//管线中包含的着色器阶段
+			VkGraphicsPipelineCreateInfo::stageCount				//管线中包含的着色器阶段数量
+			VkGraphicsPipelineCreateInfo::renderPass				//渲染传递对象
     (45) 创建图形流水线
-	vkCreateGraphicsPipelines		//如题
+	vkCreateGraphicsPipelines			//如题
 
 13. 执行渲染通道
 
@@ -312,7 +314,7 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 		//Usage:
 		//clearArr[0].color.float32 = {...}				//清屏颜色
 		//clearArr[1].depthStencil = {1.0f, 0}			//深度模板清除值
-		VkRenderPassBeginInfo				//描述帧缓存的渲染通道执行
+		VkRenderPassBeginInfo						//描述帧缓存的渲染通道执行
 			VkRenderPassBeginInfo::sType			//结构类型，此处为VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO
 			VkRenderPassBeginInfo::pNext			//nullptr
 			VkRenderPassBeginInfo::renderPass		//renderPass对象
@@ -322,7 +324,7 @@ vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对
 			VkRenderPassBeginInfo::renderArea.extent.width	//同framebuffer的width
 			VkRenderPassBeginInfo::renderArea.extent.height	//同framebuffer的height
 			VkRenderPassBeginInfo::clearValueCount		//对应前述VkClearValue数组元素数
-			VkRenderPassBeginInfo::pClearValues		//对应前述VkClearValue数组指针
+			VkRenderPassBeginInfo::pClearValues			//对应前述VkClearValue数组指针
 ---------------------------------------------------------------------------------------------
 渲染通道执行流程：
 	1. 绑定流水线：使用vkCmdBindPipeline
