@@ -1,5 +1,8 @@
 1. 创建实例    VkInstance
 
+---------------------------------------------------------------------------------------------
+入口点、初始化点、同DX12的IDXGIFactory
+---------------------------------------------------------------------------------------------
     (1) 枚举实例的层属性
 	vkEnumerateInstanceLayerProperties	//获取实例层数量
 	vkEnumerateInstanceExtensionProperties		//获取功能拓展信息
@@ -135,4 +138,120 @@ Vulkan与DX12在CPU与GPU数据更新上对比：
 ---------------------------------------------------------------------------------------------
 
 8. 着色器
-    (25) 
+
+    (25) 构建着色器模块
+	结构类型：VkPipelineShaderStageCreateInfo	//管线着色器阶段信息描述
+		VkShaderModuleCreateInfo		//着色器模块信息
+			VkShaderModuleCreateInfo::pCode	//存二进制格式着色器代码
+	方法：vkCreateShaderModule
+
+9. 构建描述符与布局
+
+---------------------------------------------------------------------------------------------
+描述符负责将资源与着色器通过布局绑定的方式关联起来，通常用它绑定Uniform和Sampler变量到着色器中。一个描述符集可包含多个布局绑定的描述符。
+---------------------------------------------------------------------------------------------
+    (26) 创建布局绑定描述符数组，每个布局绑定描述符属性（类型）与Shader一一对应，同DX12的Root Signature
+	类型：VkDescriptorSetLayoutBinding 	//布局绑定描述符
+			VkDescriptorSetLayoutBinding::descriptorType	//对应shader类型（Uniform / Sampler）
+			VkDescriptorSetLayoutBinding::binding		//绑定入口数量，与shader阶段绑定的资源数一一对应
+			VkDescriptorSetLayoutBinding::stageFlag		//设置Shader类型（Vertex / Fragment）
+    (27) 创建布局描述符集对象
+	描述结构：VkDescriptorSetLayoutCreateInfo	//说明如何创建布局描述符集对象
+			VkDescriptorSetLayoutCreateInfo::pBindings	//要绑定的布局绑定描述符（数组）地址
+	存储类型：VkDescriptorSetLayout		//存储布局描述符集对象
+	方法：vkCreateDescriptorSetLayout
+    (28) 创建流水线布局
+	描述结构：VkPipelineLayoutCreateInfo
+			VkPipelineLayoutCreateInfo::pSetLayouts		//布局描述符对象
+	方法：vkCreatePipelineLayout
+
+9. 创建渲染通道
+
+    (29) 声明两个Attachment（2元素数组），分别对应颜色（Render）与深度（Depth）缓存
+	描述结构：VkAttachmentDescription
+			VkAttachmentDescription::format	//指定当前该元素是颜色还是深度
+			VkAttachmentDescription::loadOp	//是否清除
+    (30) 分别对上述两个Attach做引用结构存储
+	描述结构：VkAttachmentReference
+    (31) 使用引用结构参照的render buffer和depth buffer说明子通道
+	描述结构：VkSubpassDescription
+			VkSubpassDescription::pColorAttachments	//颜色引用指针
+			VkSubpassDescription::pDepthStencilAttachment	//深度引用指针
+    (32) 定义渲染通道控制的结构体
+	描述结构：VkRenderPassCreateInfo
+    (33) 创建渲染通道对象
+	对象类型：VkRenderPass
+	方法：vkCreateRenderPass
+
+10. 帧缓存
+
+---------------------------------------------------------------------------------------------
+帧缓存指图像（缓存）视图的集合，用于将绘制图像关联到渲染通道
+---------------------------------------------------------------------------------------------
+    (34) 创建图像视图数组
+	结构类型：VkImageView	//创建2元素该类型数组，索引0对应颜色，索引1对应深度
+			imageViewArrs[1] = Depth.view	//将深度视图给数组[1]
+    (35) 描述帧缓存结构
+	描述结构：VkFramebufferCreateInfo
+			VkFramebufferCreateInfo::renderPass		//渲染通道对象
+			VkFramebufferCreateInfo::pAttachments		//图像视图数组指针
+			VkFramebufferCreateInfo::width		//帧缓存宽度
+			VkFramebufferCreateInfo::height		//帧缓存高度
+    (36) 为交换链中每个图像的帧缓存分配内存，每幅图像对应一个帧缓存
+	存储类型：VkFramebuffer
+	方法： vkCreateFramebuffer
+	使用：foreach (在交换链中正绘制的buffer) { imageViewArrs[0] = 当前交换链绘制buffer的视图;  vkCreateFramebuffer  }
+
+11. 存储顶点数据并绑定到流水线
+
+    (37) 自定义顶点结构，并保存顶点数据
+	顶点结构：VertexWithColor	//自定义
+	顶点数组：VertexWithColor triangleData[] = {  {0.0f, 1.0f, ...}, ...  };
+    (38) 创建存顶点的缓存（Vertex Buffer）对象、查询所需内存空间，并分配内存
+	存储类型：顶点缓存类型：VkBuffer
+		内存需求：VkMemoryRequirements
+		设备内存抽象类型：VkDeviceMemory
+	描述结构：描述缓存创建信息：VkBufferCreateInfo
+		内存分配信息：VkMemoryAllocateInfo
+	方法：	vkCreateBuffer	//创建缓存对象
+		vkGetBufferMemoryRequirements	//查询buffer所需内存
+		vkAllocateMemory		//分配内存
+    (39) 将顶点数据Map到GPU端
+	GPU端Buffer指针：uint8_t*  pData
+	方法：	vkMapMemory		//获取GPU端Buffer指针，并存入pData
+		memcpy			//拷贝顶点数据到GPU端Buffer
+		vkUnmapMemory		//取消映射
+		vkBindBufferMemory	//绑定分配的内存到vkBuffer对象
+---------------------------------------------------------------------------------------------
+vkBuffer一开始并不会和任何形式内存空间关联，应用必须主动分配和绑定设备内存到缓存对象，再使用。
+vkBuffer可直接被使用，vkImage是强制以视图（vkImageView）方式对外使用。在shader stage访问vkBuffer仍需要通过View。
+---------------------------------------------------------------------------------------------
+    (40) 说明流水线如何读取缓存资源数据
+	描述结构：VkVertexInputBindingDescription
+			VkVertexInputBindingDescription::binding	//shader输入位置
+			VkVertexInputBindingDescription::inputRate	//数据读取方式（逐顶点 / 基于一系列实例）
+			VkVertexInputBindingDescription::stride		//数据间隔（自定义顶点数据大小）
+    (41) 说明流水线如何解析缓存资源数据
+	描述结构：VkVertexInputAttributeDescription
+			kVertexInputAttributeDescription::binding		//该属性获取数据的绑定值
+			kVertexInputAttributeDescription::location	//shader输入位置
+			kVertexInputAttributeDescription::format		//顶点数据的大小与类型
+			kVertexInputAttributeDescription::offset		//与开始元素的偏移字节数
+
+12. 创建流水线
+
+---------------------------------------------------------------------------------------------
+流水线按类型分为两种：
+	1. 图形流水线：包含顶点、片元、细分、几何等多个着色器阶段，对应一个流水线布局和多个固定（Fix）函数流水线阶段
+	2. 计算流水线：包含一个静态的计算着色器阶段，对应一个刘淑仙布局
+---------------------------------------------------------------------------------------------
+流水线状态：
+	1. 动态状态：提示流水线在运行中观察状态变换情况。
+	2. 顶点输入状态：帮助流水线读取和解析用户数据。
+	3. 光栅化状态：此状态下，图元被转换为二维图像中颜色、深度等属性的数值信息。
+	4. 颜色融混附加专题：源颜色与目标颜色数据的组合。
+	5. 视口状态：控制视口变换
+	6. 深度模板状态：实现深度测试、模板测试、深度边界测试
+	7. 多重采样状态：控制图元在光栅化时反走样机制的实现。
+---------------------------------------------------------------------------------------------
+    (42) 定义流水线不同阶段的状态对象
